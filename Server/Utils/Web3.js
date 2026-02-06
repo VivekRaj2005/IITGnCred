@@ -1,4 +1,4 @@
-export const getContract = async (web3, contractArtifact) => {
+const getContract = async (web3, contractArtifact) => {
     const networkId = await web3.eth.net.getId();
     const deployedNetwork = contractArtifact.networks[networkId];
 
@@ -11,3 +11,19 @@ export const getContract = async (web3, contractArtifact) => {
         deployedNetwork.address
     );
 };
+
+function createAccount(web3) {
+    const newAccount = web3.eth.accounts.create();
+    console.log('\n--- New Account Generated ---');
+    console.log('New Ethereum Account Created:', newAccount);
+    console.log('Address:', newAccount.address);
+    console.log('Private Key:', newAccount.privateKey);
+    return newAccount;
+}
+
+module.exports = {
+    getContract,
+    createAccount
+}
+
+
