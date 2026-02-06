@@ -96,14 +96,12 @@ app.post(
     try {
       const { wallet, role } = req.user; // Extracted from JWT
       if (role !== "Gov") {
-        return res
-          .status(403)
-          .send(
-            encryptWrapper({
-              error: "Access Denied: Only Gov can approve",
-              status: false,
-            }),
-          );
+        return res.status(403).send(
+          encryptWrapper({
+            error: "Access Denied: Only Gov can approve",
+            status: false,
+          }),
+        );
       }
       const { universityName } = req.body; // Extract from decrypted body
       const receipt = await approveUniversity(
@@ -115,14 +113,12 @@ app.post(
       res.status(200).send(encryptWrapper({ status: true }));
     } catch (error) {
       console.error("[ERROR] Approve Failed:", error.message);
-      res
-        .status(500)
-        .send(
-          encryptWrapper({
-            error: "Approve Failed: " + error.message,
-            status: false,
-          }),
-        );
+      res.status(500).send(
+        encryptWrapper({
+          error: "Approve Failed: " + error.message,
+          status: false,
+        }),
+      );
     }
   },
 );
@@ -135,14 +131,12 @@ app.post(
     try {
       const { wallet, role } = req.user; // Extracted from JWT
       if (role !== "Gov") {
-        return res
-          .status(403)
-          .send(
-            encryptWrapper({
-              error: "Access Denied: Only Gov can reject",
-              status: false,
-            }),
-          );
+        return res.status(403).send(
+          encryptWrapper({
+            error: "Access Denied: Only Gov can reject",
+            status: false,
+          }),
+        );
       }
       const { universityName } = req.body; // Extract from decrypted body
       const receipt = await rejectUniversity(
@@ -154,62 +148,58 @@ app.post(
       res.status(200).send(encryptWrapper({ status: true }));
     } catch (error) {
       console.error("[ERROR] Reject Failed:", error.message);
-      res
-        .status(500)
-        .send(
-          encryptWrapper({
-            error: "Reject Failed: " + error.message,
-            status: false,
-          }),
-        );
+      res.status(500).send(
+        encryptWrapper({
+          error: "Reject Failed: " + error.message,
+          status: false,
+        }),
+      );
     }
   },
 );
 
-app.get(
-  "/api/requests",
-  JWTAuthMiddleware,
-  async (req, res) => {
-    try {
-      const { wallet, role } = req.user; // Extracted from JWT
-      if (role !== "Gov") {
-        return res
-          .status(403)
-          .send(
-            encryptWrapper({
-              error: "Access Denied: Only Gov can view requests",
-              status: false,
-            }),
-          );
-      }
-      const contract = await getContract(web3, contractArtifact);
-      // This returns an array of structs/objects containing BigInts
-      const requests = await contract.methods
-        .getAllRequests()
-        .call({ from: wallet });
-
-      // FIX: Add a replacer function as the second argument
-      const safeRequests = JSON.stringify(requests, (key, value) =>
-        typeof value === "bigint" ? value.toString() : value,
+app.get("/api/requests", JWTAuthMiddleware, async (req, res) => {
+  try {
+    const { wallet, role } = req.user; // Extracted from JWT
+    if (role !== "Gov") {
+      return res.status(403).send(
+        encryptWrapper({
+          error: "Access Denied: Only Gov can view requests",
+          status: false,
+        }),
       );
+    }
+    const contract = await getContract(web3, contractArtifact);
+    // This returns an array of structs/objects containing BigInts
+    const requests = await contract.methods
+      .getAllRequests()
+      .call({ from: wallet });
 
-      // Note: safeRequests is already a string now, so we parse it back
-      // if you want 'requests' to be a JSON object in the response,
-      // OR just send it as a string property as you were doing.
+    // FIX: Add a replacer function as the second argument
+    const safeRequests = JSON.stringify(requests, (key, value) =>
+      typeof value === "bigint" ? value.toString() : value,
+    );
 
-      res.status(200).send(encryptWrapper({
+    // Note: safeRequests is already a string now, so we parse it back
+    // if you want 'requests' to be a JSON object in the response,
+    // OR just send it as a string property as you were doing.
+
+    res.status(200).send(
+      encryptWrapper({
         requests: JSON.parse(safeRequests), // Parsing it back makes it a clean JSON object
         status: true,
-      }));
-    } catch (error) {
-      console.error("[ERROR] Fetching Requests Failed:", error.message);
-      res.status(500).send(encryptWrapper({
+      }),
+    );
+  } catch (error) {
+    console.error("[ERROR] Fetching Requests Failed:", error.message);
+    res.status(500).send(
+      encryptWrapper({
         error: "Fetching Requests Failed: " + error.message,
         status: false,
-      }));
-    }
-  },
-);
+      }),
+    );
+  }
+});
 
 //TODO: Remove this endpoint in production, only for testing purposes
 app.get("/api/dev/requests", async (req, res) => {
