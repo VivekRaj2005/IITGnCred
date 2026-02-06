@@ -36,7 +36,9 @@ app.get('/api/storage', async (req, res) => {
     try {
         const contract = await getContract();
         // .call() reads state without costing gas
-        const result = await contract.methods.get().call();
+        const result = await contract.methods.get().call(
+            { from: (await web3.eth.getAccounts())[0] } // Optional: specify from which account to read 
+        );
         res.json({ value: result.toString() });
     } catch (error) {
         res.status(500).send(error.message);
@@ -49,6 +51,8 @@ app.post('/api/storage', async (req, res) => {
     try {
         const contract = await getContract();
         const accounts = await web3.eth.getAccounts();
+
+        console.log(accounts)
         
         // .send() modifies state and costs gas.
         // We use accounts[0] which Ganache pre-funds with fake ETH.
