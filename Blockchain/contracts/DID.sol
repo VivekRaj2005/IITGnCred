@@ -63,6 +63,22 @@ contract IdentityRegistry {
         governmentAdmin = msg.sender;
     }
 
+    // Get Authorizoation Level
+    function getAuthLevel(address _user) public view returns (string memory) {
+        // 1. Check if the address is the Government Admin
+        if (_user == governmentAdmin) {
+            return "Gov";
+        } 
+        // 2. Check if the address is an AUTHORIZED Issuer
+        else if (issuers[_user].status == IssuerStatus.Authorized) {
+            return "Uni";
+        } 
+        // 3. Default to Student/Public for everyone else (including Pending issuers)
+        else {
+            return "Stu";
+        }
+    }
+
     // ==========================================
     // 1. GOVERNANCE
     // ==========================================
