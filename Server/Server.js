@@ -12,7 +12,8 @@ const {
   getContract,
   createAccount,
   requestUniversityAccess,
-  approveUniversity
+  approveUniversity,
+  rejectUniversity
 } = require("./Utils/Web3");
 const fs = require("fs");
 const { get } = require("http");
@@ -99,6 +100,21 @@ app.post("/api/approve", JWTAuthMiddleware, decryptMiddleWare, async (req, res) 
   } catch (error) { 
     console.error("[ERROR] Approve Failed:", error.message);
     res.status(500).send(encryptWrapper({ error: "Approve Failed: " + error.message, status: false }) );
+  }
+});
+
+app.post("/api/reject", JWTAuthMiddleware, decryptMiddleWare, async (req, res) => {
+  try {
+    const { wallet, role } = req.user; // Extracted from JWT
+    if (role !== "Gov") {
+      return res.status(403).send(encryptWrapper({ error: "Access Denied: Only Gov can reject", status: false }) );
+    }
+    const { universityName } = req.body; // Extract from decrypted body
+    const receipt = await rejectUniversity(web3, wallet, universityName, contractArtifact)
+    res.status(200).send(encryptWrapper({  status: true }));
+  } catch (error) { 
+    console.error("[ERROR] Reject Failed:", error.message);
+    res.status(500).send(encryptWrapper({ error: "Reject Failed: " + error.message, status: false }) );
   }
 });
 

@@ -62,9 +62,24 @@ async function approveUniversity(  web3,
   return receipt;
 }
 
+async function rejectUniversity(  web3,
+  wallet,
+  universityName,
+  contractArtifact) {
+  const contract = await getContract(web3, contractArtifact);
+  const receipt = await contract.methods
+    .rejectIssuer(universityName)
+    .send({
+      from: wallet,
+      gas: 5000000, // Gas limit
+    });
+  return receipt;
+}
+
 module.exports = {
   getContract,
   createAccount,
   requestUniversityAccess,
-  approveUniversity
+  approveUniversity,
+  rejectUniversity
 };
