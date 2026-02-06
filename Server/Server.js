@@ -182,7 +182,7 @@ app.get(
             }),
           );
       }
-
+      const contract = await getContract(web3, contractArtifact);
       // This returns an array of structs/objects containing BigInts
       const requests = await contract.methods
         .getAllRequests()
