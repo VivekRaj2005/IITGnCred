@@ -1,0 +1,141 @@
+.verifier-page-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.verifier-header {
+  text-align: center;
+  margin-bottom: 40px;
+  animation: fadeIn 0.6s ease-out;
+}
+
+.verifier-icon-large {
+  font-size: 96px;
+  margin-bottom: 20px;
+  color: var(--success);
+  animation: fadeIn 0.6s ease-out 0.2s both;
+}
+
+.verifier-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 48px;
+  font-weight: 900;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  animation: fadeIn 0.6s ease-out 0.3s both;
+}
+
+.verifier-subtitle {
+  font-size: 16px;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+  animation: fadeIn 0.6s ease-out 0.4s both;
+}
+
+.verifier-main-card {
+  margin-bottom: 30px;
+  animation: fadeIn 0.6s ease-out 0.5s both;
+}
+
+.verify-form {
+  margin-bottom: 30px;
+}
+
+.verify-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.verify-btn {
+  flex: 2;
+}
+
+.verification-result {
+  padding: 40px;
+  border-radius: 16px;
+  border: 3px solid;
+  animation: fadeIn 0.6s ease-out;
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+}
+
+.verification-result.valid {
+  background: rgba(6, 255, 165, 0.05);
+  border-color: var(--success);
+}
+
+.verification-result.invalid {
+  background: rgba(255, 0, 85, 0.05);
+  border-color: var(--error);
+}
+
+.result-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: bold;
+  flex-shrink: 0;
+  animation: fadeIn 0.6s ease-out 0.2s both;
+}
+
+.verification-result.valid .result-icon {
+  background: var(--success);
+  color: var(--bg-primary);
+  box-shadow: 0 0 30px var(--success);
+}
+
+.verification-result.invalid .result-icon {
+  background: var(--error);
+  color: white;
+  box-shadow: 0 0 30px var(--error);
+}
+
+.result-content {
+  flex: 1;
+}
+
+.result-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+}
+
+.verification-result.valid .result-title {
+  color: var(--success);
+}
+
+.verification-result.invalid .result-title {
+  color: var(--error);
+}
+
+.result-message {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.result-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border-radius: 12px;
+}

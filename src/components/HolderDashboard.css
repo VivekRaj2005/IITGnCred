@@ -1,0 +1,277 @@
+.holder-dashboard-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.credentials-section {
+  animation: fadeIn 0.6s ease-out 0.2s both;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 24px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 16px;
+}
+
+.section-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: 2px;
+}
+
+.credential-count {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  border-radius: 30px;
+}
+
+.count-number {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 32px;
+  font-weight: 900;
+  color: white;
+}
+
+.count-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.credentials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 24px;
+}
+
+.credential-card {
+  animation: fadeIn 0.6s ease-out both;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+.credential-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.credential-icon {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  background: var(--bg-tertiary);
+  border-radius: 12px;
+  border: 2px solid var(--border-color);
+}
+
+.credential-badge {
+  padding: 6px 16px;
+  background: rgba(6, 255, 165, 0.2);
+  color: var(--success);
+  border: 2px solid var(--success);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.credential-body {
+  flex: 1;
+  margin-bottom: 20px;
+}
+
+.credential-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+  word-break: break-word;
+}
+
+.credential-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.meta-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.meta-label {
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.meta-value {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.credential-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  background: var(--bg-tertiary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.credential-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 20px;
+  border-top: 2px solid var(--border-color);
+}
+
+.action-btn {
+  flex: 1;
+  padding: 12px;
+  font-size: 13px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+  animation: fadeIn 0.3s ease-out;
+  backdrop-filter: blur(8px);
+}
+
+.modal-content {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 20px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px var(--shadow);
+  animation: slideIn 0.4s ease-out;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 30px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.modal-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: 1px;
+}
+
+.modal-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+  background: var(--error);
+  border-color: var(--error);
+  color: white;
+  transform: rotate(90deg);
+}
+
+.modal-body {
+  flex: 1;
+  padding: 30px;
+  overflow: auto;
+}
+
+.pdf-viewer {
+  width: 100%;
+  height: 600px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.image-viewer {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 2px solid var(--border-color);
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 24px 30px;
+  border-top: 2px solid var(--border-color);
+}
+
+.modal-footer .btn {
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .section-header {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+  
+  .credentials-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-content {
+    max-height: 95vh;
+  }
+  
+  .pdf-viewer {
+    height: 400px;
+  }
+}
