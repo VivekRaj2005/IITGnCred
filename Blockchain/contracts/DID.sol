@@ -24,6 +24,7 @@ contract IdentityRegistry {
         address issuer;
         uint256 issueDate;
         bool isValid;
+        string cid;
     }
 
     struct GlobalMetadata {
@@ -100,7 +101,7 @@ contract IdentityRegistry {
     }
 
     // ==========================================
-    // 5. STUDENT REGISTRY (NEW)
+    // 5. STUDENT FUNCTIONS
     // ==========================================
 
     /** * @dev Registers a human-readable username for the caller's wallet address.
@@ -116,7 +117,7 @@ contract IdentityRegistry {
         emit StudentRegistered(_username, msg.sender);
     }
 
-    /** * @dev Fetch credentials using a username instead of an address.
+    /** * @dev Fetch credentials using a username.
      */
     function getCredentialsByUsername(string memory _username) public view returns (Credential[] memory) {
         address studentAddr = usernameToAddress[_username];
@@ -124,8 +125,15 @@ contract IdentityRegistry {
 
         return userCredentials[studentAddr];
     }
+    
+    /** * @dev Fetch the caller's own credentials directly.
+     * Useful for the "My Wallet" page in the frontend.
+     */
+    function getMyCredentials() public view returns (Credential[] memory) {
+        return userCredentials[msg.sender];
+    }
 
-        function getAddressByUsername(string memory _username) public view returns (address) {
+    function getAddressByUsername(string memory _username) public view returns (address) {
         address studentAddr = usernameToAddress[_username];
         return studentAddr;
     }
@@ -194,7 +202,7 @@ contract IdentityRegistry {
     // 7. ISSUANCE & VERIFICATION
     // ==========================================
 
-    function issueCredential(address _student, string memory _name, string memory _dataHash) public onlyAuthorizedIssuer {
+    function issueCredential(address _student, string memory _name, string memory _dataHash, string memory _cid) public onlyAuthorizedIssuer {
         require(!globalHashRegistry[_dataHash].exists, "This document hash already exists on-chain!");
 
         Credential memory newCred = Credential({
@@ -202,7 +210,8 @@ contract IdentityRegistry {
             dataHash: _dataHash,
             issuer: msg.sender,
             issueDate: block.timestamp,
-            isValid: true
+            isValid: true,
+            cid: _cid
         });
 
         userCredentials[_student].push(newCred);
@@ -224,7 +233,8 @@ contract IdentityRegistry {
         address issuer, 
         string memory issuerName,
         address student, 
-        uint256 issueDate
+        uint256 issueDate,
+        string memory cid
     ) {
         GlobalMetadata memory meta = globalHashRegistry[_dataHash];
         require(meta.exists, "Credential does not exist");
@@ -237,7 +247,8 @@ contract IdentityRegistry {
             meta.issuer,
             nameOfIssuer,
             meta.student,
-            credDetails.issueDate
+            credDetails.issueDate,
+            credDetails.cid
         );
     }
 

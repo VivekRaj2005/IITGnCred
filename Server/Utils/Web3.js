@@ -52,12 +52,10 @@ async function registerStudent(web3, wallet, studentName, contractArtifact) {
   console.log("\n--- Registering Student ---");
   console.log("Registering student with wallet:", wallet.address);
   const contract = await getContract(web3, contractArtifact);
-  const receipt = await contract.methods
-    .registerStudent(studentName)
-    .send({
-      from: wallet.address,
-      gas: 5000000, // Gas limit
-    });
+  const receipt = await contract.methods.registerStudent(studentName).send({
+    from: wallet.address,
+    gas: 5000000, // Gas limit
+  });
   return receipt;
 }
 
@@ -95,14 +93,32 @@ async function IssueCredentials(
   studentID,
   credentialData,
   contractArtifact,
+  cid,
 ) {
   const contract = await getContract(web3, contractArtifact);
   const receipt = await contract.methods
-    .issueCredential(studentID, credentialData)
+    .issueCredential(studentID, credentialData, cid)
     .send({
       from: wallet,
       gas: 5000000, // Gas limit
     });
+  return receipt;
+}
+
+async function verifyCredential(web3, credentialHash, contractArtifact) {
+  const contract = await getContract(web3, contractArtifact);
+  const isValid = await contract.methods
+    .verifyCredential(credentialHash)
+    .call();
+  return isValid;
+}
+
+async function RevokeCredential(web3, credentialHash, contractArtifact, wallet) {
+  const contract = await getContract(web3, contractArtifact);
+  const receipt = await contract.methods.revokeCredential(credentialHash).send({
+    from: wallet,
+    gas: 5000000, // Gas limit
+  });
   return receipt;
 }
 
@@ -113,5 +129,7 @@ module.exports = {
   approveUniversity,
   rejectUniversity,
   IssueCredentials,
-  registerStudent
+  registerStudent,
+  verifyCredential,
+  RevokeCredential
 };

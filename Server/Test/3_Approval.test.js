@@ -10,7 +10,7 @@ describe('University Registration & Gov Approval Flow', () => {
   const govWallet = GOV; // Removed trailing dot
 
 
-  // --- STEP 1: REGISTER ---W
+  // --- STEP 1: REGISTER ---
   test('Step 1: Should register a new University', async () => {
     const response = await fetch(`${API_URL}/register`, {
       method: "POST",

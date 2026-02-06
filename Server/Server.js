@@ -15,12 +15,21 @@ const {
   approveUniversity,
   rejectUniversity,
   registerStudent,
-  IssueCredentials
+  IssueCredentials,
+  verifyCredential,
+  RevokeCredential,
 } = require("./Utils/Web3");
 const fs = require("fs");
+const ipfsModule = require("ipfs-http-client");
+const cors = require("cors");
+const { Upload } = require("./Utils/Upload");
 
 app.use(express.json());
+app.use(cors());
+app.use(express.json({ limit: "100mb" }));
+
 const web3 = new Web3("http://127.0.0.1:8545");
+const ipfs = ipfsModule.create({ url: "http://127.0.0.1:5001" });
 const artifactPath = path.join(
   "../",
   "Blockchain",
@@ -230,6 +239,7 @@ app.get(
       }
       const contract = await getContract(web3, contractArtifact);
       const { student, credentialHash, credentialFile } = req.body; // Extract from decrypted body
+      const cid = await Upload(credentialFile, ipfs);
       const studentAddress = await contract.methods
         .getAddressByUsername(student)
         .call();
@@ -240,6 +250,7 @@ app.get(
         studentAddress,
         credentialHash,
         contractArtifact,
+        cid,
       );
     } catch (error) {
       console.error("[ERROR] Issue Credentials Failed:", error.message);
@@ -252,6 +263,92 @@ app.get(
     }
   },
 );
+
+app.post(
+  "/api/revokeCredential",
+  JWTAuthMiddleware,
+  decryptMiddleWare,
+  async (req, res) => {
+    try {
+      const { wallet, role } = req.user; // Extracted from JWT
+      if (role !== "University") {
+        return res.status(403).send(
+          encryptWrapper({
+            error: "Access Denied: Only Universities can revoke credentials",
+            status: false,
+          }),
+        );
+      }
+      const { credentialHash } = req.body;
+      const isValid = await verifyCredential(
+        web3,
+        credentialHash,
+        contractArtifact,
+      );
+      if (!isValid) {
+        return res.status(200).send(
+          encryptWrapper({
+            message: "Credential is already invalid or does not exist",
+            status: false,
+          }),
+        );
+      }
+      // eslint-disable-next-line no-unused-vars
+      const _ = RevokeCredential(
+        web3,
+        credentialHash,
+        contractArtifact,
+        wallet,
+      );
+      res.status(200).send(
+        encryptWrapper({
+          message: "Credential revoked successfully",
+          status: true,
+        }),
+      );
+    } catch (error) {
+      console.error("[ERROR] Revoke Credential Failed:", error.message);
+      res.status(500).send(
+        encryptWrapper({
+          error: "Revoke Credential Failed: " + error.message,
+          status: false,
+        }),
+      );
+    }
+  },
+);
+
+app.get("/api/getAllCrentials", JWTAuthMiddleware, async (req, res) => {
+  try {
+    const { wallet, role } = req.user; // Extracted from JWT
+    if (role !== "Student") {
+      return res.status(403).send(
+        encryptWrapper({
+          error: "Access Denied: Only Students can view their credentials",
+          status: false,
+        }),
+      );
+    }
+    const contract = await getContract(web3, contractArtifact);
+    const credentials = await contract.methods
+      .getCredentialsByAddress(wallet)
+      .call({ from: wallet });
+    res.status(200).send(
+      encryptWrapper({
+        credentials,
+        status: true,
+      }),
+    );
+  } catch (error) {
+    console.error("[ERROR] Fetching Credentials Failed:", error.message);
+    res.status(500).send(
+      encryptWrapper({
+        error: "Fetching Credentials Failed: " + error.message,
+        status: false,
+      }),
+    );
+  }
+});
 
 //TODO: Remove this endpoint in production, only for testing purposes
 app.get("/api/dev/requests", async (req, res) => {
@@ -282,6 +379,44 @@ app.get("/api/dev/requests", async (req, res) => {
     res.status(500).send({
       error: "Fetching Requests Failed: " + error.message,
       status: false,
+    });
+  }
+});
+
+app.post("/api/dev/upload", async (req, res) => {
+  try {
+    const { base64Data, fileName } = req.body;
+
+    if (!base64Data) {
+      return res.status(400).json({ error: "No base64Data provided" });
+    }
+
+    console.log(`Processing file: ${fileName || "Unknown"}`);
+
+    // 3. Clean Base64 String
+    // Removes the prefix if present (e.g., "data:image/png;base64,")
+    const base64Content = base64Data.replace(/^data:.+;base64,/, "");
+
+    // 4. Convert to Buffer
+    const fileBuffer = Buffer.from(base64Content, "base64");
+
+    // 5. Upload to IPFS
+    // ipfs.add takes a Buffer, String, or Stream
+    const result = await ipfs.add(fileBuffer);
+
+    console.log("Upload successful. CID:", result.cid.toString());
+
+    // 6. Return Result
+    res.json({
+      success: true,
+      cid: result.cid.toString(),
+      url: `http://127.0.0.1:8080/ipfs/${result.cid.toString()}`, // Local Gateway URL
+    });
+  } catch (error) {
+    console.error("IPFS Upload Error:", error);
+    res.status(500).json({
+      error: "Failed to upload to IPFS",
+      details: error.message,
     });
   }
 });
