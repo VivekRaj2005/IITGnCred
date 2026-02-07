@@ -1,156 +1,202 @@
-import { encryptData, generateDummyDID } from './crypto';
+import axios from "axios";
+import { encryptData, decryptData } from "./crypto";
 
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+// Update Base URL to match the Express server port
+const API = axios.create({
+  baseURL: "http://10.2.40.0:76/api",
+});
 
-export const registerUser = async (name, username, password, role) => {
-  await delay(1000);
-  
-  const didDocument = {
-    did: generateDummyDID(),
-    name: name,
-    username: username,
-    role: role,
-    publicKey: `pk_${Math.random().toString(36).substring(2, 15)}`,
-    createdAt: new Date().toISOString(),
-    status: role === 'issuer' ? 'pending' : 'active'
-  };
-  
-  const encryptedFile = encryptData(didDocument, username, password);
-  
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("jwt");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Helper to convert file to Base64 for IPFS upload on server
+const toBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+  });
+
+/* ---------------- REGISTER ---------------- */
+export const registerUser = async (name, walletAddress, password, role) => {
+  const payload =
+    role === "Student"
+      ? { role, studentName: name }
+      : { role, universityName: name };
+
+  const encrypted = encryptData(payload, walletAddress, password);
+
+  const res = await API.post("/register", encrypted);
+  const data = decryptData(res.data, walletAddress, password);
+
   return {
-    success: true,
-    encryptedFile,
-    name,
-    message: role === 'issuer' 
-      ? 'Registration successful! Awaiting admin approval.' 
-      : 'Registration successful!'
+    success: data.status,
+    account: data.account,
+    message:
+      role === "University"
+        ? "Registration successful! Awaiting government approval."
+        : "Registration successful!",
   };
 };
 
-export const loginUser = async (username, password, role) => {
-  await delay(800);
-  
-  const storedEncryptedFile = localStorage.getItem(`${role}_${username}_encrypted`);
-  const storedName = localStorage.getItem(`${role}_${username}_name`);
-  
-  if (!storedEncryptedFile) {
-    throw new Error('User not found. Please register first.');
+/* ---------------- LOGIN ---------------- */
+export const loginUser = async (walletAddress, password, role) => {
+  // Encrypt wallet address as expected by decryptMiddleWare
+  const encrypted = encryptData({ walletAddress }, walletAddress, password);
+
+  const res = await API.post("/login", encrypted);
+  // Server returns { token, role, status } inside encryptWrapper
+  const data = decryptData(res.data, walletAddress, password);
+
+  if (data.status) {
+    localStorage.setItem("jwt", data.token);
+    localStorage.setItem("role", data.role);
+    localStorage.setItem("wallet", walletAddress);
   }
-  
+
   return {
-    success: true,
-    encryptedFile: storedEncryptedFile,
-    name: storedName
+    success: data.status,
+    role: data.role,
+    token: data.token,
+    error: data.error,
   };
 };
 
-export const adminLogin = async (username, password) => {
-  await delay(800);
-  
-  if (username === 'admin' && password === 'admin123') {
-    return {
-      success: true,
-      message: 'Admin login successful'
-    };
-  }
-  
-  throw new Error('Invalid admin credentials');
+/* ---------------- ADMIN LOGIN (Gov) ---------------- */
+export const adminLogin = async (walletAddress, password) => {
+  return loginUser(walletAddress, password, "Gov");
+};
+
+/* ---------------- PENDING ISSUERS ---------------- */
+export const getPendingIssuers = async () => {
+  const res = await API.get("/requests");
+  const data = decryptData(res.data);
+
+  if (!data.requests) return [];
+
+  // Filter for status '0' (Pending)
+  return data.requests.filter(
+    (req) => req.status === "0" || req.status === 0
+  );
 };
 
 export const getApprovedIssuers = async () => {
-  await delay(500);
-  const approvedIssuers = JSON.parse(localStorage.getItem('approvedIssuers') || '[]');
-  return approvedIssuers;
+  const res = await API.get("/requests");
+  const data = decryptData(res.data);
+
+  if (!data.requests) return [];
+
+  // Filter for status '2' (Approved) - Server converts BigInt to string
+  const approved = data.requests.filter(
+    (req) => req.status === "2" || req.status === 2
+  );
+
+  return approved;
 };
 
-export const getPendingIssuers = async () => {
-  await delay(500);
-  const pendingIssuers = JSON.parse(localStorage.getItem('pendingIssuers') || '[]');
-  return pendingIssuers;
+/* ---------------- APPROVE ISSUER ---------------- */
+export const approveIssuer = async (universityName) => {
+  const encrypted = encryptData({ universityName });
+
+  const res = await API.post("/approve", encrypted);
+  const data = decryptData(res.data);
+
+  return { success: data.status, error: data.error };
 };
 
-export const approveIssuer = async (username) => {
-  await delay(500);
+/* ---------------- REJECT ISSUER ---------------- */
+export const rejectIssuer = async (universityName) => {
+  const encrypted = encryptData({ universityName });
+
+  const res = await API.post("/reject", encrypted);
+  const data = decryptData(res.data);
+
+  return { success: data.status, error: data.error };
+};
+
+/* ---------------- ISSUE CREDENTIAL ---------------- */
+export const issueCredential = async (studentUsername, file) => {
+  // 1. Calculate Hash
+  const credentialHashBuffer = await crypto.subtle.digest(
+    "SHA-256",
+    await file.arrayBuffer()
+  );
+  const credentialHash = Array.from(new Uint8Array(credentialHashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  // 2. Convert File to Base64 (Server expects data for IPFS upload)
+  const fileBase64 = await toBase64(file);
+
+  const encrypted = encryptData({
+    student: studentUsername,
+    credentialHash: credentialHash, // Hex string
+    credentialFile: fileBase64,     // Actual file data
+  });
+
+  // NOTE: Server defines this as app.get(), but expects a body.
+  // Axios requires `data` property for body in GET requests.
+  const res = await API.get("/issueCredenctials", {
+    data: encrypted
+  });
   
-  const pendingIssuers = JSON.parse(localStorage.getItem('pendingIssuers') || '[]');
-  const approvedIssuers = JSON.parse(localStorage.getItem('approvedIssuers') || '[]');
-  
-  const issuerIndex = pendingIssuers.findIndex(i => i.username === username);
-  if (issuerIndex !== -1) {
-    const issuer = pendingIssuers[issuerIndex];
-    issuer.status = 'approved';
-    issuer.approvedAt = new Date().toISOString();
-    
-    approvedIssuers.push(issuer);
-    pendingIssuers.splice(issuerIndex, 1);
-    
-    localStorage.setItem('approvedIssuers', JSON.stringify(approvedIssuers));
-    localStorage.setItem('pendingIssuers', JSON.stringify(pendingIssuers));
-    
-    return { success: true, message: 'Issuer approved successfully' };
+  const data = decryptData(res.data);
+
+  return {
+    success: data.status,
+    message: data.status ? "Credential issued successfully" : data.error,
+  };
+};
+
+/* ---------------- HOLDER CREDENTIALS ---------------- */
+export const getHolderCredentials = async () => {
+  // Matches server endpoint: /api/getAllCrentials (Typos preserved)
+  const res = await API.get("/getAllCrentials");
+  const data = decryptData(res.data);
+
+  if (!data.status) {
+    throw new Error(data.error || "Failed to fetch credentials");
   }
-  
-  throw new Error('Issuer not found');
+
+  return data.credentials;
 };
 
-export const rejectIssuer = async (username) => {
-  await delay(500);
-  
-  const pendingIssuers = JSON.parse(localStorage.getItem('pendingIssuers') || '[]');
-  const updatedIssuers = pendingIssuers.filter(i => i.username !== username);
-  
-  localStorage.setItem('pendingIssuers', JSON.stringify(updatedIssuers));
-  
-  return { success: true, message: 'Issuer rejected' };
-};
-
-export const issueCredential = async (holderUsername, file) => {
-  await delay(1000);
-  
-  const credential = {
-    id: `cred_${Math.random().toString(36).substring(2, 15)}`,
-    holderUsername: holderUsername,
-    fileName: file.name,
-    fileData: file.data,
-    fileType: file.type,
-    issuedAt: new Date().toISOString(),
-    issuer: 'current_issuer'
-  };
-  
-  const credentials = JSON.parse(localStorage.getItem('credentials') || '[]');
-  credentials.push(credential);
-  localStorage.setItem('credentials', JSON.stringify(credentials));
-  
-  return {
-    success: true,
-    message: 'Credential issued successfully',
-    credential
-  };
-};
-
-export const getHolderCredentials = async (holderUsername) => {
-  await delay(500);
-  
-  const credentials = JSON.parse(localStorage.getItem('credentials') || '[]');
-  const holderCredentials = credentials.filter(c => c.holderUsername === holderUsername);
-  
-  return holderCredentials;
-};
-
+/* ---------------- VERIFY CREDENTIAL ---------------- */
 export const verifyCredential = async (file) => {
-  await delay(1500);
+  // The server does not expose a public /verify endpoint. 
+  // Verification is done on-chain or via the revoke endpoint internally.
+  // We can calculate the hash here for the UI to show.
   
-  const isValid = Math.random() > 0.3;
-  
+  const credentialHashBuffer = await crypto.subtle.digest(
+    "SHA-256",
+    await file.arrayBuffer()
+  );
+  const hash = Array.from(new Uint8Array(credentialHashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
   return {
     success: true,
-    isValid: isValid,
-    message: isValid ? 'Credential is valid and verified' : 'Credential verification failed',
-    details: {
-      fileName: file.name,
-      verifiedAt: new Date().toISOString(),
-      issuer: isValid ? 'Trusted Issuer' : 'Unknown',
-      status: isValid ? 'VERIFIED' : 'INVALID'
-    }
+    message: "Local hash calculated. Use Blockchain explorer to verify.",
+    hash: hash
+  };
+};
+
+/* ---------------- REVOKE CREDENTIAL ---------------- */
+export const revokeCredential = async (credentialHash) => {
+  const encrypted = encryptData({ credentialHash });
+
+  const res = await API.post("/revokeCredential", encrypted);
+  const data = decryptData(res.data);
+
+  return {
+    success: data.status,
+    message: data.message || data.error,
   };
 };
