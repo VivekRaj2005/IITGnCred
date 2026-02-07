@@ -125,3 +125,68 @@ input, select, textarea {
 .slide-in {
   animation: slideIn 0.6s ease-out;
 }
+
+/* --- RESPONSIVE ADJUSTMENTS --- */
+
+@media (max-width: 768px) {
+  /* 1. Prevent Centering Issues */
+  .App {
+    align-items: flex-start; /* Better for long forms on mobile */
+    padding: 80px 15px 40px 15px; /* Room for fixed buttons at top */
+  }
+
+  /* 2. Scale Down Typography */
+  .title {
+    font-size: 28px;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    margin-bottom: 25px;
+  }
+
+  /* 3. Adjust Floating Navigation */
+  .back-button {
+    padding: 10px 16px;
+    font-size: 12px;
+    top: 15px;
+    left: 15px;
+  }
+
+  .theme-toggle {
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
+    top: 15px;
+    right: 15px;
+  }
+
+  /* 4. Compact Card */
+  .card {
+    padding: 24px 20px;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* 5. Mobile-First Form Elements */
+  .form-input, .form-select, .btn {
+    font-size: 16px; /* Prevents iOS auto-zoom on focus */
+    padding: 12px;
+  }
+
+  .btn {
+    width: 100%; /* Easy thumb-tapping width */
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  /* Adjust background animation for performance on older phones */
+  .App::before {
+    display: none; 
+  }
+}
