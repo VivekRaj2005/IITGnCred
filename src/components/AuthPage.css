@@ -87,12 +87,48 @@
   text-decoration: underline;
 }
 
+
 @media (max-width: 768px) {
+  .auth-page-container {
+    max-width: 100%; /* Ensure it fills the screen width */
+    padding: 0 10px;
+  }
+
+  .auth-card {
+    padding: 30px 20px; /* Slimmer padding than desktop */
+    border-radius: 12px;
+  }
+
+  .auth-header {
+    margin-bottom: 25px; /* Tighten up spacing */
+  }
+
   .auth-icon {
-    font-size: 56px;
+    font-size: 48px; /* Slightly smaller to save vertical space */
+    margin-bottom: 10px;
+  }
+
+  .auth-title {
+    font-size: 22px;
+    letter-spacing: 1px;
+  }
+}
+
+/* Landscape Mobile or very short screens */
+@media (max-height: 700px) and (max-width: 768px) {
+  .auth-icon {
+    display: none; /* Hide the big icon so the keyboard doesn't cover the inputs */
   }
   
-  .auth-title {
-    font-size: 24px;
+  .auth-header {
+    margin-bottom: 15px;
   }
+}
+
+.auth-submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px; /* Keeps button height consistent if text disappears/spinner appears */
 }
