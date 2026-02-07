@@ -18,6 +18,8 @@ const HolderDashboard = ({ user, onLogout }) => {
     try {
       // UPDATED: Use wallet address instead of username
       const creds = await getHolderCredentials(user.wallet);
+      console.log("Fetched credentials for wallet:", user.wallet);
+      console.log("Credentials data:", creds);
       setCredentials(creds || []);
     } catch (error) {
       console.error('Failed to load credentials:', error);
@@ -32,7 +34,7 @@ const HolderDashboard = ({ user, onLogout }) => {
 
   const handleDownload = (credential) => {
     // UPDATED: Check for 'file' property (common in IPFS/Blockchain responses)
-    const fileUrl = credential.file || credential.fileData;
+    const fileUrl = "http://localhost:8080/ipfs/" + credential.cid;
     
     if (!fileUrl) {
       alert("File data not available");
