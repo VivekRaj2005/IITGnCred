@@ -11,23 +11,29 @@ const IssuerDashboard = ({ user, onLogout }) => {
   const [courseName, setCourseName] = useState(''); 
 
   // REVOKE STATE
-  const [revokeId, setRevokeId] = useState('');
+  const [revokeFile, setRevokeFile] = useState(null);
   
   // UI STATE
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e, isRevoke = false) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      setSelectedFile({
+      const fileData = {
         name: file.name,
         type: file.type,
         data: reader.result, // Base64 data
-      });
+      };
+      
+      if (isRevoke) {
+        setRevokeFile(fileData);
+      } else {
+        setSelectedFile(fileData);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -35,7 +41,7 @@ const IssuerDashboard = ({ user, onLogout }) => {
   const handleIssue = async (e) => {
     e.preventDefault();
     if (!holderWallet || !selectedFile) {
-      setMessage({ type: 'error', text: 'Please provide wallet address and select a file' });
+      setMessage({ type: 'error', text: 'Please provide username and select a file' });
       return;
     }
 
@@ -46,7 +52,6 @@ const IssuerDashboard = ({ user, onLogout }) => {
       const result = await issueCredential(holderWallet, selectedFile, courseName);
       setMessage({ type: 'success', text: result.message || "Credential issued successfully!" });
       
-      // Reset Form
       setHolderWallet('');
       setCourseName('');
       setSelectedFile(null);
@@ -61,8 +66,8 @@ const IssuerDashboard = ({ user, onLogout }) => {
 
   const handleRevoke = async (e) => {
     e.preventDefault();
-    if (!revokeId) {
-      setMessage({ type: 'error', text: 'Please provide the Credential ID' });
+    if (!revokeFile) {
+      setMessage({ type: 'error', text: 'Please select the file to revoke' });
       return;
     }
 
@@ -70,9 +75,12 @@ const IssuerDashboard = ({ user, onLogout }) => {
     setMessage({ type: '', text: '' });
 
     try {
-      const result = await revokeCredential(revokeId);
+      // Assuming revokeCredential accepts the file object or its hash
+      const result = await revokeCredential(revokeFile);
       setMessage({ type: 'success', text: result.message || "Credential revoked successfully" });
-      setRevokeId('');
+      setRevokeFile(null);
+      const fileInput = document.getElementById('revoke-file-input');
+      if(fileInput) fileInput.value = '';
     } catch (err) {
       setMessage({ type: 'error', text: err.message || "Revocation failed" });
     } finally {
@@ -101,13 +109,13 @@ const IssuerDashboard = ({ user, onLogout }) => {
           className={`tab-btn ${activeTab === 'create' ? 'active' : ''}`}
           onClick={() => { setActiveTab('create'); setMessage({type:'', text:''}); }}
         >
-          ➕ Issue
+          Issue
         </button>
         <button
           className={`tab-btn ${activeTab === 'revoke' ? 'active' : ''}`}
           onClick={() => { setActiveTab('revoke'); setMessage({type:'', text:''}); }}
         >
-          🗑️ Revoke
+          Revoke
         </button>
       </div>
 
@@ -119,8 +127,8 @@ const IssuerDashboard = ({ user, onLogout }) => {
           </h2>
           <p className="card-description">
             {activeTab === 'create'
-              ? 'Upload a document and link it to a student\'s wallet address.'
-              : 'Permanently invalidate a credential on the blockchain.'}
+              ? 'Upload a document and link it to a student\'s username.'
+              : 'Upload the original document to invalidate it on the blockchain.'}
           </p>
         </div>
 
@@ -133,37 +141,26 @@ const IssuerDashboard = ({ user, onLogout }) => {
         {activeTab === 'create' ? (
           <form onSubmit={handleIssue} className="issue-form">
             <div className="form-group">
-              <label className="form-label">Student Wallet Address</label>
+              <label className="form-label">Student Username</label>
               <input
                 type="text"
                 className="form-input mono-input"
                 value={holderWallet}
                 onChange={(e) => setHolderWallet(e.target.value)}
-                placeholder="0x..."
+                placeholder="Username"
                 required
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label">Credential Name / Course</label>
-              <input
-                type="text"
-                className="form-input"
-                value={courseName}
-                onChange={(e) => setCourseName(e.target.value)}
-                placeholder="e.g. Master of Science in AI"
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Upload Document (PDF/Image)</label>
+              <label className="form-label">Upload Document (PDF)</label>
               <div className="file-upload-wrapper">
                 <input
                   id="create-file-input"
                   type="file"
                   className="hidden-file-input"
-                  onChange={handleFileChange}
-                  accept=".pdf,.jpg,.png"
+                  onChange={(e) => handleFileChange(e, false)}
+                  accept=".pdf"
                   required
                 />
                 <label htmlFor="create-file-input" className="file-upload-label">
@@ -176,34 +173,39 @@ const IssuerDashboard = ({ user, onLogout }) => {
             </div>
 
             <button className="btn btn-primary submit-btn" disabled={loading}>
-              {loading ? 'Minting on Blockchain...' : '🚀 Issue Credential'}
+              {loading ? 'Minting on Blockchain...' : "Issue Credential"}
             </button>
           </form>
         ) : (
           <form onSubmit={handleRevoke} className="issue-form">
             <div className="form-group">
-              <label className="form-label">Credential Hash/ID</label>
-              <input
-                type="text"
-                className="form-input mono-input"
-                value={revokeId}
-                onChange={(e) => setRevokeId(e.target.value)}
-                placeholder="Enter unique credential ID"
-                required
-              />
-              <div className="warning-note">
-                ⚠️ <strong>Caution:</strong> This action is written to the blockchain and cannot be undone.
+              <label className="form-label">Upload Document to Revoke</label>
+              <div className="file-upload-wrapper">
+                <input
+                  id="revoke-file-input"
+                  type="file"
+                  className="hidden-file-input"
+                  onChange={(e) => handleFileChange(e, true)}
+                  accept=".pdf,.jpg,.png"
+                  required
+                />
+                <label htmlFor="revoke-file-input" className="file-upload-label">
+                  <div className="upload-icon">{revokeFile ? '📄' : '🗑️'}</div>
+                  <div className="upload-text">
+                    {revokeFile ? revokeFile.name : 'Click to select file for revocation'}
+                  </div>
+                </label>
               </div>
             </div>
 
             <button className="btn btn-danger submit-btn" disabled={loading}>
-              {loading ? 'Revoking...' : '🗑️ Confirm Revocation'}
+              {loading ? 'Revoking...' : 'Confirm Revocation'}
             </button>
           </form>
         )}
       </div>
     </div>
   );
-};
+}
 
 export default IssuerDashboard;
