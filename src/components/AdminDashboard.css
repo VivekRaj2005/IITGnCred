@@ -232,22 +232,61 @@
   color: var(--text-secondary);
 }
 
+
+
 @media (max-width: 768px) {
+  /* 1. Header & Title Adjustments */
   .dashboard-header {
-    flex-direction: column;
-    gap: 20px;
-    text-align: center;
+    padding: 20px;
+    margin-bottom: 25px;
   }
-  
+
   .dashboard-title {
-    font-size: 28px;
+    font-size: 24px; /* Previous 28px might still be too wide for Orbitron */
+    letter-spacing: 1px;
   }
-  
+
+  /* 2. Scrollable Tabs (Instead of Stacking) */
+  /* Stacking tabs vertically takes up too much vertical space. 
+     Making them horizontally scrollable is a standard mobile dashboard pattern. */
   .tabs-container {
-    flex-direction: column;
+    flex-direction: row; /* Overriding your previous column change */
+    overflow-x: auto;
+    padding-bottom: 10px;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    gap: 12px;
   }
-  
+
+  .tab-btn {
+    flex: 0 0 auto; /* Don't shrink, don't grow */
+    padding: 12px 20px;
+    font-size: 12px;
+  }
+
+  /* 3. Grid & Cards */
   .issuers-grid {
-    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .issuer-card {
+    padding: 20px; /* Reducing internal padding saves screen real estate */
+  }
+
+  .issuer-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+
+  .issuer-name {
+    font-size: 16px;
+  }
+
+  /* 4. Action Buttons */
+  /* In a narrow card, two side-by-side buttons with long text will break.
+     Stack them for better tap targets. */
+  .issuer-actions {
+    flex-direction: column;
   }
 }
