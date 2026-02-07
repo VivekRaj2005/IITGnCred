@@ -255,26 +255,61 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+/* --- RESPONSIVE OVERRIDES --- */
 
 @media (max-width: 768px) {
+  .App {
+    padding: 10px; /* Less padding on the edges */
+    align-items: flex-start; /* Start from top so user can scroll down naturally */
+    padding-top: 80px; /* Make room for the fixed buttons */
+  }
+
   .title {
-    font-size: 32px;
+    font-size: 28px; /* Shrink title so it doesn't wrap awkwardly */
+    margin-top: 20px;
   }
-  
+
+  .subtitle {
+    font-size: 14px;
+    margin-bottom: 25px;
+  }
+
   .card {
-    padding: 24px;
+    padding: 20px;
+    border-radius: 12px; /* Slightly softer corners for mobile */
   }
-  
-  .theme-toggle,
+
+  /* Adjusting buttons to be smaller touch targets */
   .back-button {
-    top: 10px;
+    padding: 8px 16px;
+    font-size: 12px;
+    top: 15px;
+    left: 15px;
   }
-  
+
   .theme-toggle {
-    right: 10px;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    top: 15px;
+    right: 15px;
   }
-  
-  .back-button {
-    left: 10px;
+}
+
+/* Extra Small Devices (Phones in portrait) */
+@media (max-width: 480px) {
+  .title {
+    font-size: 24px;
+    letter-spacing: 1px;
+  }
+
+  .btn {
+    width: 100%; /* Make buttons full-width for easier thumb-tapping */
+    margin-bottom: 10px;
+  }
+
+  /* If the back button and theme toggle still feel crowded */
+  .back-button span {
+    display: none; /* Hide text, show only icon if you have one */
   }
 }
